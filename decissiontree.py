@@ -27,17 +27,17 @@ logger.setLevel(logging.INFO)
 
 def parse_file_trainingdata():
     
-    response = urllib2.urlopen("https://s3.amazonaws.com/machinelearning-practice/adult_lite.data")
     training_data = []
-    for line in response: # files are iterable
-
-        lLine = ast.literal_eval(line)
-        training_data.append(lLine)
-
+    with open("ds/adult.data","r") as f:
+        content = f.readlines()
+        for line in content:
+            lLine = ast.literal_eval(line)
+            #logger.info(lLine)
+            training_data.append(lLine)
     return training_data
 
 training_data = parse_file_trainingdata()
-logger.info(training_data)
+#logger.info(training_data)
 
 header = ["age", "workclass", "fnlwgt", "education", "education-num", "marital-status", "occupation", "relationship", "race", "sex", "capital-gain", "capital-loss", "hours-per-week", "native-country", "class"]
 
@@ -334,24 +334,33 @@ def build_tree(rows):
     # dependingo on the answer.
     return Decision_Node(question, true_branch, false_branch)
 
+file = open("decissiontree.txt", "w")
 
 def print_tree(node, spacing=""):
+
+    
+    
     """World's most elegant tree printing function."""
 
     # Base case: we've reached a leaf
     if isinstance(node, Leaf):
         logger.info(spacing + "Predict", node.predictions)
+        file.write(spacing + "Predict" + str(node.predictions) + "\n")
         return
 
     # Print the question at this node
     logger.info(spacing + str(node.question))
+    file.write(spacing + str(node.question) + "\n")
 
     # Call this function recursively on the true branch
     logger.info(spacing + '--> True:')
+    file.write(spacing + '--> True:' + "\n")
     print_tree(node.true_branch, spacing + "  ")
 
     # Call this function recursively on the false branch
     logger.info(spacing + '--> False:')
+    file.write(spacing + '--> False:' + "\n")
+
     print_tree(node.false_branch, spacing + "  ")
 
 
@@ -400,6 +409,18 @@ def print_leaf(counts):
 # print_leaf(classify(training_data[1], my_tree))
 #######
 
+def get_testing_data():
+
+    testing_data = []
+    with open("ds/adult.test","r") as f:
+        content = f.readlines()
+        for line in content:
+            lLine = ast.literal_eval(line)
+            #logger.info(lLine)
+            testing_data.append(lLine)
+    return testing_data
+
+
 
 def lambda_handler(event, context):
     
@@ -407,11 +428,7 @@ def lambda_handler(event, context):
 
     print_tree(my_tree)
     
-    testing_data = [
-          [36,'Federal-gov',212465,'Bachelors',13,'Married-civ-spouse','Adm-clerical','Husband','White','Male',0,0,40,'United-States','<=50K.'],
-          [26,'Private',82091,'HS-grad',9,'Never-married','Adm-clerical','Not-in-family','White','Female',0,0,39,'United-States','<=50K.'],
-          [65,'Private',184454,'HS-grad',1,'Married-civ-spouse','Machine-op-inspct','Husband','White','Male',1000,0,40,'United-States','>50K.'],
-    ]
+    testing_data = get_testing_data()
 
     for row in testing_data:
         logger.info("Actual: %s. Predicted: %s" %
